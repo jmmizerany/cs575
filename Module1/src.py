@@ -24,20 +24,12 @@ class State(ABC):
     @abstractmethod
     def doSomething(self) -> None:
         pass
+class CircuitStates:
+    CLOSED = "CLOSED"
+    OPEN = "OPEN"
+    HALF_OPEN = "HALF_OPEN"
 
-class ConcreteStateA(State):
-    def doSomething(self) -> None:
-        print("ConcreteStateA: Doing something in state A")
-        self.context.setState(ConcreteStateB())
-
-class ConcreteStateB(State):
-    def doSomething(self) -> None:
-        print("ConcreteStateB: Doing something in state B")
-        self.context.setState(ConcreteStateA())
-
-
-if __name__ == "__main__":
-    # Example usage
-    context = Context(ConcreteStateA())
-    context.doSomething()  # Should print message from ConcreteStateA and switch to ConcreteStateB
-    context.doSomething()  # Should print message from ConcreteStateB and switch back to ConcreteStateA
+class CircuitBreaker(State):
+    def __init__(self) -> None:
+        # Initialize the circuit breaker in a closed state
+        self.context.setState(CircuitStates.CLOSED)
