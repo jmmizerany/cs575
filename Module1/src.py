@@ -2,9 +2,13 @@ from abc import ABC, abstractmethod
 import datetime
 import time
 import random
+import logging
 
 # change this to the desired timeout in seconds
 RESET_TIMEOUT_SECONDS = 5
+
+# setting log level
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s: %(message)s')
 
 class Context:
     _state = None
@@ -37,12 +41,11 @@ class ClosedState(State):
         return "CLOSED"
     
     def failed_call(self):
-        print("Call failed in CLOSED state, switching to HALF_OPEN")
+        logging.info("Call failed in CLOSED state, switching to HALF_OPEN")
         self.context.setState(HalfOpenState())
     
     def successful_call(self):
-        print("Call succeeded in CLOSED state, remaining CLOSED")
-        # Stay in closed state
+        logging.info("Call succeeded in CLOSED state, remaining CLOSED")
 
 class OpenState(State):
     def __init__(self):
@@ -52,21 +55,21 @@ class OpenState(State):
         return "OPEN"
     
     def failed_call(self):
-        print("Circuit is OPEN, call not attempted")
+        logging.info("Circuit is OPEN, call not attempted")
     
     def successful_call(self):
-        print("Circuit is OPEN, call not attempted")
+        logging.info("Circuit is OPEN, call not attempted")
 
 class HalfOpenState(State):
     def __str__(self):
         return "HALF_OPEN"
     
     def failed_call(self):
-        print("Call failed in HALF_OPEN state, switching to OPEN")
+        logging.info("Call failed in HALF_OPEN state, switching to OPEN")
         self.context.setState(OpenState())
     
     def successful_call(self):
-        print("Call succeeded in HALF_OPEN state, switching to CLOSED")
+        logging.info("Call succeeded in HALF_OPEN state, switching to CLOSED")
         self.context.setState(ClosedState())
 
 class CircuitBreaker(State):
@@ -78,12 +81,12 @@ class CircuitBreaker(State):
     
     def failed_call(self):
         current_state = self.context._state
-        print(f"Failed call in {current_state} state")
+        logging.info(f"Failed call in {current_state} state")
         current_state.failed_call()
     
     def successful_call(self):
         current_state = self.context._state
-        print(f"Successful call in {current_state} state")
+        logging.info(f"Successful call in {current_state} state")
         current_state.successful_call()
 
     def handle_open_state(self):
@@ -97,18 +100,16 @@ class CircuitBreaker(State):
             
             if diff_time < self.delay:
                 remaining = self.delay - diff_time
-                print(f"Circuit is OPEN. Please wait {remaining:.1f} seconds before retrying")
+                logging.info(f"Circuit is OPEN. Please wait {remaining:.1f} seconds before retrying")
             else:
-                print("Timeout elapsed, moving to HALF_OPEN")
+                logging.info("Timeout elapsed, moving to HALF_OPEN")
                 self.context.setState(HalfOpenState())
                 self._open_time = None
         
         elif isinstance(current_state, ClosedState):
-            # Do nothing, we're in closed state
             pass
         
         elif isinstance(current_state, HalfOpenState):
-            # Let the next call determine the state
             pass
 
 if __name__ == "__main__":
@@ -116,20 +117,19 @@ if __name__ == "__main__":
 
     try:
         while True:
-            # Check if we need to handle timeouts in OPEN state
             cb.handle_open_state()
             
-            # mock a random call (using random library)
+            # mock a random call (using random library, I chose anything below 0.25 as a failure)
             call_success = random.random() >= 0.25
             
             if call_success:
-                print("Call was successful")
+                logging.info("Call was successful")
                 cb.successful_call()
             else:
-                print("Call failed")
+                logging.info("Call failed")
                 cb.failed_call()
             
-            # Sleep a bit to see the output
+            # sleeping to make output easier to read
             time.sleep(1)
     except KeyboardInterrupt:
-        print("\nExiting circuit breaker simulation")
+        logging.info("\nExiting circuit breaker simulation")
