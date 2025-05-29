@@ -1,8 +1,9 @@
-from abc import ABC, abstractmethod
-import datetime
 import time
 import random
 import logging
+import datetime
+
+from abc import ABC, abstractmethod
 
 # change this to the desired timeout in seconds
 RESET_TIMEOUT_SECONDS = 5
